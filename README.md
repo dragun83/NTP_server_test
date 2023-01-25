@@ -1,20 +1,20 @@
-#This is a small script for testing NTP servers
+# This is a small script for testing NTP servers
 
 It's requests one time per second information from server and sav it to sqlite DB.
 
 
-###Requests
+### Requests
 
 + python3.x
 + ntplib (https://pypi.org/project/ntplib/)
 
-###TO DO:
+### TO DO:
 1. Write a manual.
 
 
 ### Маленький подвал
 
-####  Содержание ответа функции ntpclient.request(<address>)
+#### Содержание ответа функции ntpclient.request(<address>)
     leap  :  0
     version  :  2
     mode  :  4

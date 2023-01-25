@@ -7,8 +7,6 @@ import argparse
 import time
 import os
 
-#log levels
-ll_name=["critical","error","warning","info","debug"]
 
 def init_argparse():
   try:
@@ -18,12 +16,13 @@ def init_argparse():
                          help="Database name. Default DB name is: \'"
                          + default_db_name + "\'")
     parser.add_argument('-a','--address', type=str, help='Server address')
-    parser.add_argument('-l','--log-level', type=int, default = 1, help='Logging level from 0(critical) to 7(debug). Default = 1(error)')
+    parser.add_argument('-l','--log-level', type=int, default = 1, help='Logging level from 0(critical) to 4(debug). Default = 3(info)')
+    parser.add_argument('-s','--sleep',type=int, default = 1, help='Sleep time in seconds. Default = 1 second.)
     #parse arguments
     args = parser.parse_args()
     return args
   except Exception as err:
-#    log_message(1, "Function : init_argparse(). Someting goes wrong! Error message : " + str(err))
+    log_message(1, "Function : init_argparse(). Someting goes wrong! Error message : " + str(err))
     return False
 
 #Функция создания\открытия БД SQLITE
@@ -50,7 +49,7 @@ def init_db(db_name):
       db_conn.commit()
       return db_conn, curs
   except Exception as err:
-#    log_message(1, "Function : init_db(). Someting goes wrong! Error message : " + str(err))
+    log_message(1, "Function : init_db(). Someting goes wrong! Error message : " + str(err))
     return False
     
 # Функция записи информации offset и startum в БД
@@ -63,7 +62,7 @@ def write_db(db_conn, curs, offset, stratum):
     db_conn.commit()
     return True
   except Exception as err:
-#    log_message(1, "Function : write_db(). Someting goes wrong! Error message : " + str(err))
+    log_message(1, "Function : write_db(). Someting goes wrong! Error message : " + str(err))
     return False
 
 # Функция опроса NTP
@@ -72,11 +71,13 @@ def get_ntp_data(address):
     ntp_data = ntplib.NTPClient().request(address)
     return ntp_data
   except Exception as err:
-#    log_message(1, "Function : get_db_data(). Someting goes wrong! Error message : " + str(err))
+    log_message(1, "Function : get_db_data(). Someting goes wrong! Error message : " + str(err))
     return False
 
 def log_message(message_level,message):
   try:
+    #log levels
+    ll_name=["critical","error","warning","info","debug"]
     if(message_level <= args.log_level):
       print(time.asctime(time.localtime()) + " : " + str(ll_name[message_level]).upper() + " : " + str(message))
     return True
@@ -86,18 +87,18 @@ def log_message(message_level,message):
 
 if __name__ == "__main__":
   try:
-    log_message(4,"Start script. Parsing arguments.")
+    log_message(3,"Start script. Parsing arguments.")
     args = init_argparse()
-    log_message(4,"Trying to open DB.")
+    log_message(3,"Trying to open DB.")
     db_conn, curs = init_db(args.db_name)
-    log_message(4,"DB is opend, geting data from NTP server.")
+    log_message(3,"DB is opend, geting data from NTP server.")
     db_conn, curs = init_db(args.db_name)
     while True:
       ntp_data = get_ntp_data(args.address)
-      log_message(5, "Data from server recieved.")
+      log_message(4, "Data from server " + str(args.address) + " recieved.")
       write_db(db_conn, curs, ntp_data.offset, ntp_data.stratum)
-      log_message(5, "Data writed to DB. Wait for 1 sec.")
-      time.sleep(1)
+      log_message(4, "Data writed to " + str(args.db_name)+ " . Wait for" + str(args.sleep) + " sec.")
+      time.sleep(args.sleep)
   except Exception as err:
     db_conn.commit()
     db_conn.close()
@@ -105,6 +106,6 @@ if __name__ == "__main__":
   except KeyboardInterrupt:
     db_conn.commit()
     db_conn.close()
-    log_message(4, "Normal stop.")
+    log_message(3, "Normal stop.")
 
 

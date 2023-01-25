@@ -17,7 +17,8 @@ def init_argparse():
                          + default_db_name + "\'")
     parser.add_argument('-a','--address', type=str, help='Server address')
     parser.add_argument('-l','--log-level', type=int, default = 1, help='Logging level from 0(critical) to 4(debug). Default = 3(info)')
-    parser.add_argument('-s','--sleep',type=int, default = 1, help='Sleep time in seconds. Default = 1 second.)
+    parser.add_argument('-s','--sleep',type=int, default = 1, help='Sleep time in seconds. Default = 1 second.')
+    parser.add_argument('--create-db', action='store_true', help='Just create empty DB')
     #parse arguments
     args = parser.parse_args()
     return args
@@ -35,9 +36,11 @@ def init_db(db_name):
       curs.execute('''
         CREATE TABLE ntp_test (
           record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          db_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          run_id INTEGER,
+          server_id TEXT,
           offset REAL,
-          stratum INTEGER);
+          stratum INTEGER,
+          db_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);
       ''')
       # Коммитим изменения в БД и возвращаем маркеры БД и курсора
       db_conn.commit()
@@ -51,14 +54,23 @@ def init_db(db_name):
   except Exception as err:
     log_message(1, "Function : init_db(). Someting goes wrong! Error message : " + str(err))
     return False
+#Функция получения идентефикатора запуска run_id
+def get_run_id(db_conn, curs):
+  try:
+    result = curs.execute('SELECT MAX(run_id) FROM ntp_test')
+    return True
+  except Exception as err:
+    return False
     
 # Функция записи информации offset и startum в БД
-def write_db(db_conn, curs, offset, stratum):
+def write_db(db_conn, curs, offset, stratum,run_id,server_id):
   try:
     curs.execute('''
-      INSERT INTO ntp_test(offset, stratum)
-      VALUES (\'''' + str(offset) + '''\', \'''' + str(stratum) + '''\') 
-    ''')
+      INSERT INTO \'ntp_test\'(offset, stratum,run_id,server_id)
+      VALUES (\'''' + str(offset) + '''\',\''''
+       + str(stratum) + '''\',\''''
+       + str(run_id) + '''\',\''''
+       + str(server_id) + '''\' );''')
     db_conn.commit()
     return True
   except Exception as err:
@@ -91,18 +103,22 @@ if __name__ == "__main__":
     args = init_argparse()
     log_message(3,"Trying to open DB.")
     db_conn, curs = init_db(args.db_name)
+    if args.create_db:
+      log_message(3,"--create-db flag is set. Just create DB and exit")
+      db_conn.close()
+      exit(0)
     log_message(3,"DB is opend, geting data from NTP server.")
     db_conn, curs = init_db(args.db_name)
     while True:
       ntp_data = get_ntp_data(args.address)
       log_message(4, "Data from server " + str(args.address) + " recieved.")
-      write_db(db_conn, curs, ntp_data.offset, ntp_data.stratum)
+      write_db(db_conn, curs, ntp_data.offset, ntp_data.stratum,1,"foo")
       log_message(4, "Data writed to " + str(args.db_name)+ " . Wait for" + str(args.sleep) + " sec.")
       time.sleep(args.sleep)
   except Exception as err:
     db_conn.commit()
     db_conn.close()
-    log_message(1, "Someting goes wrong! Error message : ")
+    log_message(1, "Someting goes wrong! Error message : " + str(err))
   except KeyboardInterrupt:
     db_conn.commit()
     db_conn.close()

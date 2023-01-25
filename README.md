@@ -1,6 +1,6 @@
 # This is a small script for testing NTP servers
 
-It's requests one time per second information from server and sav it to sqlite DB.
+It's requests one time in the period information from server and save it to sqlite DB.
 
 
 ### Requests
@@ -9,7 +9,10 @@ It's requests one time per second information from server and sav it to sqlite D
 + ntplib (https://pypi.org/project/ntplib/)
 
 ### TO DO:
-1. Write a manual.
+1. Add run_id ID for script run
+
+n. Write a manual.
+
 
 
 ### Маленький подвал

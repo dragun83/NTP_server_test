@@ -54,7 +54,7 @@ def init_db(db_name):
   except Exception as err:
     log_message(1, "Function : init_db(). Someting goes wrong! Error message : " + str(err))
     return False
-#Функция получения идентефикатора запуска run_id
+#Функция получения идентефикатора запуска run_id [РАБОТАТЬ ЗДЕСЬ!]
 def get_run_id(db_conn, curs):
   try:
     result = curs.execute('SELECT MAX(run_id) FROM ntp_test')
